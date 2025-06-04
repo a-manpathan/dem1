@@ -1,0 +1,326 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 193 100% 42%; /* Updated to match #00A1D6 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 193 100% 42%; /* Updated to match #00A1D6 */
+
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 193 100% 42%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 193 100% 42%;
+
+    --sidebar: 222.2 47.4% 11.2%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Dark mode specific overrides */
+.dark .bg-gray-50 {
+  @apply bg-background;
+}
+
+.dark .bg-white {
+  @apply bg-card;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  @apply text-foreground;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  @apply border-border;
+}
+
+/* Ensure text in tables is visible in dark mode */
+.dark table tbody tr td {
+  @apply text-foreground;
+}
+
+/* Fix for charts in dark mode */
+.dark [data-chart] {
+  @apply text-foreground;
+}
+
+.dark [data-chart] .recharts-cartesian-axis-tick-value {
+  @apply fill-foreground;
+}
+
+.dark [data-chart] .recharts-legend-item-text {
+  @apply text-foreground;
+}
+
+/* Add these styles to ensure charts and cards look good in dark mode */
+.dark .bg-card-dark {
+  @apply bg-gray-900/80 border border-gray-800;
+}
+
+/* Replace the problematic selector */
+/* .dark .bg-gray-800 {
+  @apply bg-gray-900/80 border border-gray-800;
+} */
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  @apply stroke-gray-800;
+}
+
+.dark .recharts-tooltip-cursor {
+  @apply stroke-gray-700;
+}
+
+/* Ensure text in charts is visible in dark mode */
+.dark [data-chart] {
+  @apply text-gray-200;
+}
+
+.dark [data-chart] .recharts-cartesian-axis-tick-value {
+  @apply fill-gray-400;
+}
+
+/* Ensure buttons and selects have proper styling in dark mode */
+.dark .custom-select-dark {
+  background-color: rgb(31, 41, 55);
+  color: rgb(229, 231, 235);
+  border-color: rgb(55, 65, 81);
+}
+
+/* Add these styles to ensure consistent pill/tag styling across the application */
+@layer components {
+  .pill-tag {
+    @apply bg-white dark:bg-gray-700 
+           text-gray-800 dark:text-gray-100 
+           rounded-full px-3 py-1 text-sm
+           hover:bg-gray-100 dark:hover:bg-gray-600
+           border border-gray-200 dark:border-gray-600
+           transition-colors;
+  }
+  
+  .pill-container {
+    @apply flex flex-wrap gap-2;
+  }
+  
+  .empty-state-text {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+  }
+}
+
+/* Fix for hover states on interactive elements */
+.dark button:hover:not([disabled]),
+.dark .interactive-element:hover {
+  @apply bg-gray-700 text-gray-100;
+}
+
+button:hover:not([disabled]),
+.interactive-element:hover {
+  @apply bg-gray-100 text-gray-800;
+}
+
+/* Fix for list items hover states */
+.dark tr:hover,
+.dark li:hover,
+.dark .list-item:hover {
+  @apply bg-gray-700 !important;
+}
+
+tr:hover,
+li:hover,
+.list-item:hover {
+  @apply bg-gray-50 !important;
+}
+
+/* Fix for buttons in dark mode */
+.dark button:hover:not([disabled]),
+.dark [role="button"]:hover:not([disabled]) {
+  @apply bg-gray-700 text-gray-100 !important;
+}
+
+/* Fix for outline buttons in dark mode */
+.dark button[class*="outline"]:hover:not([disabled]) {
+  @apply bg-gray-700 text-gray-100 border-gray-600 !important;
+}
+
+/* Fix for primary buttons in dark mode */
+.dark button[class*="bg-primary"]:hover:not([disabled]) {
+  @apply bg-primary/80 text-primary-foreground !important;
+}
+
+/* Message component specific dark mode fixes */
+.dark .message-container {
+  @apply bg-gray-800 border-gray-700 text-gray-100;
+}
+
+.dark .message-header {
+  @apply text-gray-100;
+}
+
+.dark .message-subtext {
+  @apply text-gray-400;
+}
+
+.dark .message-content {
+  @apply text-gray-300;
+}
+
+.dark .message-attachment {
+  @apply bg-blue-900/20 border-blue-800;
+}
+
+.dark .message-attachment-text {
+  @apply text-blue-300;
+}
+
+/* Input field dark mode fixes */
+.dark input,
+.dark textarea,
+.dark select {
+  @apply bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  @apply border-gray-500 ring-gray-500;
+}
+
+/* Doctor Messages dark mode fixes */
+.dark .patient-list-item {
+  @apply hover:bg-gray-800 text-gray-100;
+}
+
+.dark .patient-list-item-meta {
+  @apply text-gray-400;
+}
+
+/* Dark mode fixes for doctor messages page */
+.dark .message-bubble {
+  @apply bg-gray-800 border-gray-700 text-gray-100;
+}
+
+.dark .message-link {
+  @apply bg-blue-900/20 text-blue-400 border-blue-800/30;
+}
+
+.dark .message-meta {
+  @apply text-gray-400;
+}
+
+.dark .message-sender {
+  @apply text-gray-100;
+}
+
+.dark .message-role {
+  @apply text-gray-400;
+}
+
+.dark .message-facility {
+  @apply text-gray-500;
+}
+
+/* Fix for avatar fallbacks in dark mode */
+.dark .avatar-fallback {
+  @apply bg-gray-700 text-gray-200;
+}
+
+/* Fix for select components in dark mode */
+.dark .select-trigger {
+  @apply bg-gray-800 text-gray-100 border-gray-700;
+}
+
+.dark .select-content {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.dark .select-item {
+  @apply text-gray-100 data-[highlighted]:bg-gray-700;
+}
+
+/* Fix for buttons in dark mode */
+.dark .button-outline {
+  @apply bg-gray-700 text-gray-100 border-gray-600 hover:bg-gray-600;
+}
+
+.dark .button-primary {
+  @apply bg-primary hover:bg-primary/90 text-primary-foreground;
+}
+
+.dark .button-secondary {
+  @apply bg-cyan-600 hover:bg-cyan-700 text-white;
+}
+
+.dark .button-success {
+  @apply bg-green-600 hover:bg-green-700 text-white;
+}
