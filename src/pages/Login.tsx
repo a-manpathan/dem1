@@ -7,18 +7,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff } from 'lucide-react';
 import genixLogo from './jok.jpg';
 import { useAuth } from '@/contexts/AuthContext';
+import { signup, login } from '@/services/api';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login: setAuthUser } = useAuth(); // Renamed to avoid naming conflict
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState('admin');
-  
+  const [errorMessage, setErrorMessage] = useState('');
   const [loginData, setLoginData] = useState({
-    email: 'genix@info',
-    password: 'genix@123'
+    email: '',
+    password: ''
   });
-  
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
@@ -28,27 +28,81 @@ const Login = () => {
     hospital: ''
   });
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    // In a real app, you would validate and authenticate here
-    if (userType === 'admin') {
-      login('admin');
-      navigate('/appointments');
-    } else {
-      login('doctor');
-      navigate('/doctor/dashboard');
+    setErrorMessage(''); // Clear previous errors
+
+    const loginCredentials = {
+      email: loginData.email,
+      password: loginData.password,
+      userType
+    };
+
+    try {
+      const response = await login(loginCredentials);
+      // Set user in AuthContext
+      setAuthUser(response.user.userType);
+      // Redirect based on userType
+      if (userType === 'admin') {
+        navigate('/appointments');
+      } else if (userType === 'doctor') {
+        navigate('/doctor/dashboard');
+      } else {
+        navigate('/patient/home');
+      }
+    } catch (error) {
+      setErrorMessage(error.response?.data?.error || 'Login failed. Please try again.');
     }
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    // In a real app, you would validate and create account here
-    if (userType === 'admin') {
-      login('admin');
-      navigate('/appointments');
-    } else {
-      login('doctor');
-      navigate('/doctor/dashboard');
+    setErrorMessage(''); // Clear previous errors
+
+    // Validate passwords match
+    if (signupData.password !== signupData.confirmPassword) {
+      return setErrorMessage('Passwords do not match');
+    }
+
+    // Prepare data for signup API
+    const userData = {
+      name: signupData.name,
+      email: signupData.email,
+      password: signupData.password,
+      userType,
+      specialization: userType === 'doctor' ? signupData.specialization : undefined,
+      hospital: userType === 'doctor' ? signupData.hospital : undefined
+    };
+
+    console.log('Sending signup data:', userData);
+
+    try {
+      const response = await signup(userData);
+      setSignupData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        specialization: '',
+        hospital: ''
+      });
+      alert(response.message); // Show success message
+      navigate('/'); // Redirect to home or login page
+    } catch (error) {
+      console.error('Signup error:', error);
+      setErrorMessage(error.response?.data?.error || error.message || 'Signup failed. Please try again.');
+    }
+  };
+
+  const testBackendConnection = async () => {
+    try {
+      const response = await fetch('https://backendgen-hgewftfphagrcbg7.southindia-01.azurewebsites.net/api/test');
+      const data = await response.json();
+      alert(`Backend test successful: ${data.message}`);
+      console.log('Backend test response:', data);
+    } catch (error) {
+      alert(`Backend test failed: ${error.message}`);
+      console.error('Backend test error:', error);
     }
   };
 
@@ -60,6 +114,22 @@ const Login = () => {
         </div>
         
         <div className="bg-white rounded-lg shadow-md p-6">
+          {errorMessage && (
+            <p className="text-red-500 text-center mb-4">{errorMessage}</p>
+          )}
+
+          {/* Test Backend Button */}
+          <div className="mb-4 text-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={testBackendConnection}
+              className="text-xs"
+            >
+              Test Backend Connection
+            </Button>
+          </div>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -67,7 +137,7 @@ const Login = () => {
             </TabsList>
             
             <div className="mb-4">
-              <div className="flex space-x-4 mb-6">
+              <div className="flex space-x-2 mb-6">
                 <Button 
                   type="button" 
                   variant={userType === 'admin' ? 'default' : 'outline'}
@@ -83,6 +153,14 @@ const Login = () => {
                   onClick={() => setUserType('doctor')}
                 >
                   Doctor
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={userType === 'patient' ? 'default' : 'outline'}
+                  className={userType === 'patient' ? 'bg-primary' : ''}
+                  onClick={() => setUserType('patient')}
+                >
+                  Patient
                 </Button>
               </div>
             </div>

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
-type UserType = 'admin' | 'doctor' | null;
+type UserType = 'admin' | 'doctor' | 'patient' | null;
 
 interface AuthContextType {
   userType: UserType;
@@ -24,20 +24,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = (type: UserType) => {
+  const login = useCallback((type: UserType) => {
     setUserType(type);
     setIsAuthenticated(true);
     localStorage.setItem('userType', type as string);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUserType(null);
     setIsAuthenticated(false);
     localStorage.removeItem('userType');
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    userType,
+    isAuthenticated,
+    login,
+    logout
+  }), [userType, isAuthenticated, login, logout]);
 
   return (
-    <AuthContext.Provider value={{ userType, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

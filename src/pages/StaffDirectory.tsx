@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Plus, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,9 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import doctorImage from '@/assets/doctor.jpg';
+
+interface DoctorFormData {
+  name: string;
+  email: string;
+  specialization: string;
+  contact: string;
+  location: string;
+}
 
 const StaffDirectory = () => {
   const [addStaffOpen, setAddStaffOpen] = useState(false);
@@ -20,7 +28,15 @@ const StaffDirectory = () => {
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterLocation, setFilterLocation] = useState('ALL LOCATION');
   const [selectedStaff, setSelectedStaff] = useState<number[]>([]);
-  
+  const [formData, setFormData] = useState<DoctorFormData>({
+    name: '',
+    email: '',
+    specialization: '',
+    contact: '',
+    location: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
   // Sample staff data
   const staff = Array(8).fill(null).map((_, index) => ({
     id: index + 1,
@@ -43,6 +59,31 @@ const StaffDirectory = () => {
         return [...prev, id];
       }
     });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleAddStaff = () => {
+    setIsLoading(true);
+    // Simulate an API call
+    setTimeout(() => {
+      setIsLoading(false);
+      setAddStaffOpen(false);
+      setFormData({
+        name: '',
+        email: '',
+        specialization: '',
+        contact: '',
+        location: ''
+      });
+      toast('Staff member added successfully');
+    }, 2000);
   };
 
   return (
@@ -254,8 +295,99 @@ const StaffDirectory = () => {
       <Dialog open={addStaffOpen} onOpenChange={setAddStaffOpen}>
         <DialogContent className="sm:max-w-md">
           <div className="p-4">
-            <h2 className="text-xl font-semibold mb-4">Add Staff</h2>
-            {/* Dialog content would go here */}
+            <DialogHeader>
+              <DialogTitle>Add Staff</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Name
+                </label>
+                <Input 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                  placeholder="Enter staff member's name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <Input 
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                  placeholder="Enter staff member's email"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Specialization
+                </label>
+                <Input 
+                  name="specialization"
+                  value={formData.specialization}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                  placeholder="Enter staff member's specialization"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Contact
+                </label>
+                <Input 
+                  name="contact"
+                  value={formData.contact}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full border-gray-300 rounded-md"
+                  placeholder="Enter staff member's contact number"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Location
+                </label>
+                <Select 
+                  name="location"
+                  value={formData.location}
+                  onValueChange={(value) => setFormData({ ...formData, location: value })}
+                >
+                  <SelectTrigger className="mt-1 block w-full border-gray-300 rounded-md">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="City Hospital">City Hospital</SelectItem>
+                    <SelectItem value="Metro Clinic">Metro Clinic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="flex justify-end mt-4">
+              <Button 
+                onClick={() => setAddStaffOpen(false)} 
+                className="mr-2 h-10 rounded-md border border-gray-300"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+              
+              <Button 
+                onClick={handleAddStaff} 
+                className="h-10 rounded-md"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Adding...' : 'Add Staff'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

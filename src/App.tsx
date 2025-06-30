@@ -2,30 +2,45 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import DoctorAvailability from './pages/doctor/DoctorAvailability';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Layout from "./components/Layout";
-import Appointments from "./pages/Appointments";
-import StaffDirectory from "./pages/StaffDirectory";
-import Analytics from "./pages/Analytics";
-import Billing from "./pages/Billing";
-import Pricing from "./pages/Pricing";
-import Settings from "./pages/Settings";
-import Messages from "./pages/Messages";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import DoctorDashboard from "@/pages/doctor/DoctorDashboard";
-import DoctorAppointments from "@/pages/doctor/DoctorAppointments";
-import DoctorMessages from './pages/doctor/DoctorMessages';
-import DoctorProfile from './pages/doctor/DoctorProfile';
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import DoctorLayout from './components/doctor/DoctorLayout';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import ShiftManagement from "./pages/ShiftManagement";
-import Attendance from "./pages/Attendance";
-import LeaveManagement from './pages/LeaveManagement';
-import DoctorPrescriptionPad from "./pages/doctor/DoctorPrescriptionPad";
+import { SpeechToTextProvider } from './components/doctor/SpeechToTextProvider';
+import { initializeSpeechToText, updateTranscriptTextarea } from './utils/speechToTextConnector';
+import { useEffect, useState, lazy, Suspense } from 'react';
+
+// Lazy load components
+const Layout = lazy(() => import("./components/Layout"));
+const DoctorLayout = lazy(() => import('./components/doctor/DoctorLayout'));
+const Login = lazy(() => import("./pages/Login"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SpeechToTextInitializer = lazy(() => import('./components/doctor/SpeechToTextInitializer'));
+
+// Admin pages
+const Appointments = lazy(() => import("./pages/Appointments"));
+const StaffDirectory = lazy(() => import("./pages/StaffDirectory"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Messages = lazy(() => import("./pages/Messages"));
+const ShiftManagement = lazy(() => import("./pages/ShiftManagement"));
+const Attendance = lazy(() => import("./pages/Attendance"));
+const LeaveManagement = lazy(() => import('./pages/LeaveManagement'));
+
+// Doctor pages
+const DoctorDashboard = lazy(() => import("@/pages/doctor/DoctorDashboard"));
+const DoctorAppointments = lazy(() => import("@/pages/doctor/DoctorAppointments"));
+const DoctorMessages = lazy(() => import('./pages/doctor/DoctorMessages'));
+const DoctorProfile = lazy(() => import('./pages/doctor/DoctorProfile'));
+const DoctorAvailability = lazy(() => import('./pages/doctor/DoctorAvailability'));
+const DoctorPrescriptionPad = lazy(() => import("./pages/doctor/DoctorPrescriptionPad"));
+
+// Patient pages
+const PatientHome = lazy(() => import('./pages/patient/PatientHome'));
+const PatientAppointments = lazy(() => import('./pages/patient/PatientAppointments'));
+const PatientLayout = lazy(() => import('./components/patient/PatientLayout'));
 
 const queryClient = new QueryClient();
 
@@ -48,129 +63,204 @@ const AppRoutes = () => {
       {/* Redirect root based on auth status */}
       <Route path="/" element={
         isAuthenticated ? 
-          (userType === 'admin' ? <Navigate to="/appointments" replace /> : <Navigate to="/doctor/dashboard" replace />) : 
+          (userType === 'admin' ? <Navigate to="/appointments" replace /> : 
+           userType === 'doctor' ? <Navigate to="/doctor/dashboard" replace /> : 
+           <Navigate to="/patient/home" replace />) : 
           <Navigate to="/login" replace />
       } />
       
       {/* Login route */}
       <Route path="/login" element={
         isAuthenticated ? 
-          (userType === 'admin' ? <Navigate to="/appointments" replace /> : <Navigate to="/doctor/dashboard" replace />) : 
-          <Login />
+          (userType === 'admin' ? <Navigate to="/appointments" replace /> : 
+           userType === 'doctor' ? <Navigate to="/doctor/dashboard" replace /> : 
+           <Navigate to="/patient/home" replace />) : 
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Login />
+          </Suspense>
       } />
 
       <Route path="/doctor/availability" element={
         <ProtectedRoute requiredUserType="doctor">
-          <DoctorLayout>
-            <DoctorAvailability />
-          </DoctorLayout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <DoctorLayout>
+              <DoctorAvailability />
+            </DoctorLayout>
+          </Suspense>
         </ProtectedRoute>
       } />
       
       {/* Doctor routes */}
       <Route path="/doctor/dashboard" element={
         <ProtectedRoute requiredUserType="doctor">
-          <DoctorLayout>
-            <DoctorDashboard />
-          </DoctorLayout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <DoctorLayout>
+              <DoctorDashboard />
+            </DoctorLayout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/doctor/appointments" element={
         <ProtectedRoute requiredUserType="doctor">
-          <DoctorLayout>
-            <DoctorAppointments />
-          </DoctorLayout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <DoctorLayout>
+              <DoctorAppointments />
+            </DoctorLayout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/doctor/messages" element={
         <ProtectedRoute requiredUserType="doctor">
-          <DoctorLayout>
-            <DoctorMessages />
-          </DoctorLayout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <DoctorLayout>
+              <DoctorMessages />
+            </DoctorLayout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/doctor/profile" element={
         <ProtectedRoute requiredUserType="doctor">
-          <DoctorLayout>
-            <DoctorProfile />
-          </DoctorLayout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <DoctorLayout>
+              <DoctorProfile />
+            </DoctorLayout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/doctor/prescription-pad" element={
         <ProtectedRoute requiredUserType="doctor">
-          <DoctorLayout>
-            <DoctorPrescriptionPad />
-          </DoctorLayout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <DoctorLayout>
+              <DoctorPrescriptionPad />
+            </DoctorLayout>
+          </Suspense>
         </ProtectedRoute>
       } />
       
       {/* Admin routes */}
       <Route path="/appointments" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Appointments /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Appointments /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/staff" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><StaffDirectory /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><StaffDirectory /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/shift-management" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><ShiftManagement /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><ShiftManagement /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/attendance" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Attendance /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Attendance /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/leave-management" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><LeaveManagement /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><LeaveManagement /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/analytics" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Analytics /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Analytics /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/billing" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Billing /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Billing /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/pricing" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Pricing /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Pricing /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/messages" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Messages /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Messages /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/settings" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Settings /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Settings /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/settings/hospital" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Settings /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Settings /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
       <Route path="/settings/notification" element={
         <ProtectedRoute requiredUserType="admin">
-          <Layout><Settings /></Layout>
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <Layout><Settings /></Layout>
+          </Suspense>
         </ProtectedRoute>
       } />
-      <Route path="*" element={<NotFound />} />
+      {/* Patient routes */}
+      <Route path="/patient/home" element={
+        <ProtectedRoute requiredUserType="patient">
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <PatientLayout>
+              <PatientHome />
+            </PatientLayout>
+          </Suspense>
+        </ProtectedRoute>
+      } />
+      <Route path="/patient/appointments" element={
+        <ProtectedRoute requiredUserType="patient">
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <PatientLayout>
+              <PatientAppointments />
+            </PatientLayout>
+          </Suspense>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="*" element={
+        <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+          <NotFound />
+        </Suspense>
+      } />
     </Routes>
   );
 };
 
 const App = () => {
+  const [isSTTInitialized, setIsSTTInitialized] = useState(false);
+
+  useEffect(() => {
+    if (!isSTTInitialized) {
+      initializeSpeechToText();
+      setIsSTTInitialized(true);
+    }
+  }, [isSTTInitialized]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -179,7 +269,19 @@ const App = () => {
         <ThemeProvider>
           <AuthProvider>
             <BrowserRouter>
-              <AppRoutes />
+              <SpeechToTextProvider 
+                language="en-US" 
+                onTranscriptChange={updateTranscriptTextarea}
+              >
+                <AppRoutes />
+                <Suspense fallback={null}>
+                  <SpeechToTextInitializer 
+                    isRecording={false} 
+                    onTranscriptChange={() => {}} 
+                    onToggleRecording={() => {}}
+                  />
+                </Suspense>
+              </SpeechToTextProvider>
             </BrowserRouter>
           </AuthProvider>
         </ThemeProvider>
