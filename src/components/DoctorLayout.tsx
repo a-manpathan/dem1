@@ -9,7 +9,8 @@ import {
   Menu,
   X,
   Bell,
-  ChevronDown
+  ChevronDown,
+  Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +30,7 @@ const DoctorLayout = ({ children }: { children: React.ReactNode }) => {
     { icon: <Calendar className="w-5 h-5" />, label: 'Appointments', path: '/doctor/appointments' },
     { icon: <BarChart3 className="w-5 h-5" />, label: 'Analytics', path: '/doctor/analytics' },
     { icon: <MessageSquare className="w-5 h-5" />, label: 'Messages', path: '/doctor/messages' },
+    { icon: <Video className="w-5 h-5" />, label: 'Video Test', path: '/test/video-call' },
     { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/doctor/settings' },
   ];
 

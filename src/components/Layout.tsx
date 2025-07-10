@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Users, BarChart3, CreditCard, MessageCircle, Bell, Settings, ChevronDown } from 'lucide-react';
+import { Calendar, Users, BarChart3, CreditCard, MessageCircle, Bell, Settings, ChevronDown, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Billing', href: '/billing', icon: CreditCard },
     { name: 'Messages', href: '/messages', icon: MessageCircle },
+    { name: 'Video Test', href: '/test/video-call', icon: Video },
   ];
 
   const isActive = (href: string) => {

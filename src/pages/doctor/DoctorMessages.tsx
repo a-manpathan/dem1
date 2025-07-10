@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Paperclip, Phone, Calendar, X } from 'lucide-react';
+import { Search, Paperclip, Phone, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -13,6 +13,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import TelephoneInvitationModal from '@/components/doctor/TelephoneInvitationModal';
+import VideoInvitationButton from '@/components/ui/VideoInvitationButton';
+import VideoCallModal from '@/components/VideoCallModal';
 
 const DoctorMessages = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const DoctorMessages = () => {
   });
   
   const [isPhoneInvitationOpen, setIsPhoneInvitationOpen] = useState(false);
+  const [isVideoCallOpen, setIsVideoCallOpen] = useState(false);
   
   const patients = Array(10).fill(null).map((_, i) => ({
     id: i + 1,
@@ -161,10 +164,9 @@ const DoctorMessages = () => {
                 <Phone className="w-4 h-4 mr-2" />
                 Invitation
               </Button>
-              <Button variant="outline" className="flex items-center dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-600">
-                <Calendar className="w-4 h-4 mr-2" />
-                Invitation
-              </Button>
+              <VideoInvitationButton 
+                onClick={() => setIsVideoCallOpen(true)}
+              />
               <div className="flex-1"></div>
               <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
                 Send as text message
@@ -184,6 +186,13 @@ const DoctorMessages = () => {
       <TelephoneInvitationModal 
         isOpen={isPhoneInvitationOpen}
         onClose={() => setIsPhoneInvitationOpen(false)}
+      />
+      
+      {/* Video Call Modal */}
+      <VideoCallModal 
+        isOpen={isVideoCallOpen}
+        onClose={() => setIsVideoCallOpen(false)}
+        patientName={selectedPatient.name}
       />
     </>
   );

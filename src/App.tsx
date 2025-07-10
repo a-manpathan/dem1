@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,7 +39,12 @@ const DoctorPrescriptionPad = lazy(() => import("./pages/doctor/DoctorPrescripti
 // Patient pages
 const PatientHome = lazy(() => import('./pages/patient/PatientHome'));
 const PatientAppointments = lazy(() => import('./pages/patient/PatientAppointments'));
+const PatientMedicalRecord = lazy(() => import('./pages/patient/PatientMedicalRecord'));
+const PatientMessages = lazy(() => import('./pages/patient/PatientMessages'));
 const PatientLayout = lazy(() => import('./components/patient/PatientLayout'));
+
+// Test pages
+const VideoCallTest = lazy(() => import('./pages/VideoCallTest'));
 
 const queryClient = new QueryClient();
 
@@ -240,6 +244,31 @@ const AppRoutes = () => {
             </PatientLayout>
           </Suspense>
         </ProtectedRoute>
+      } />
+      <Route path="/patient/medical-record" element={
+        <ProtectedRoute requiredUserType="patient">
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <PatientLayout>
+              <PatientMedicalRecord />
+            </PatientLayout>
+          </Suspense>
+        </ProtectedRoute>
+      } />
+      <Route path="/patient/messages" element={
+        <ProtectedRoute requiredUserType="patient">
+          <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+            <PatientLayout>
+              <PatientMessages />
+            </PatientLayout>
+          </Suspense>
+        </ProtectedRoute>
+      } />
+      
+      {/* Test routes - accessible by all user types */}
+      <Route path="/test/video-call" element={
+        <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+          <VideoCallTest />
+        </Suspense>
       } />
       
       <Route path="*" element={

@@ -8,7 +8,8 @@ import {
   FileText, 
   MessageCircle, 
   AlertCircle,
-  LogOut
+  LogOut,
+  Settings
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -19,19 +20,27 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import jokLogo from '@/pages/jok.jpg';
+import PatientSettings from '@/pages/patient/PatientSettings';
 
 const PatientLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState(
-    location.pathname.includes('appointments') ? 'appointments' : 'home'
+    location.pathname.includes('appointments') ? 'appointments' : 
+    location.pathname.includes('medical-record') ? 'profile' :
+    location.pathname.includes('messages') ? 'message' : 'home'
   );
 
   // Update activeTab when location changes
   React.useEffect(() => {
     if (location.pathname.includes('appointments')) {
       setActiveTab('appointments');
+    } else if (location.pathname.includes('medical-record')) {
+      setActiveTab('profile');
+    } else if (location.pathname.includes('messages')) {
+      setActiveTab('message');
     } else if (location.pathname.includes('home')) {
       setActiveTab('home');
     }
@@ -41,6 +50,14 @@ const PatientLayout = ({ children }: { children: React.ReactNode }) => {
     logout();
     navigate('/login');
   };
+
+  if (showSettings) {
+    return (
+      <PatientLayout>
+        <PatientSettings onBack={() => setShowSettings(false)} />
+      </PatientLayout>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -77,7 +94,10 @@ const PatientLayout = ({ children }: { children: React.ReactNode }) => {
                 <span>Appointments</span>
               </button>
               <button 
-                onClick={() => setActiveTab('profile')}
+                onClick={() => {
+                  setActiveTab('profile');
+                  navigate('/patient/medical-record');
+                }}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                   activeTab === 'profile' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
@@ -86,7 +106,10 @@ const PatientLayout = ({ children }: { children: React.ReactNode }) => {
                 <span>Medical Record</span>
               </button>
               <button 
-                onClick={() => setActiveTab('message')}
+                onClick={() => {
+                  setActiveTab('message');
+                  navigate('/patient/messages');
+                }}
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
                   activeTab === 'message' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
@@ -101,6 +124,12 @@ const PatientLayout = ({ children }: { children: React.ReactNode }) => {
             <FullscreenToggle />
             <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
               <AlertCircle className="h-5 w-5" />
+            </button>
+            <button 
+              className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={() => setShowSettings(true)}
+            >
+              <Settings className="h-5 w-5" />
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

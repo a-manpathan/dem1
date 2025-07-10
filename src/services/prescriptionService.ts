@@ -20,7 +20,7 @@ interface PrescriptionResponse {
 }
 
 class PrescriptionService {
-  private readonly apiUrl = 'https://backendgen-hgewftfphagrcbg7.southindia-01.azurewebsites.net/api/prescription';
+  private readonly apiUrl = 'http://localhost:8000/api/prescription';
  
 
   async generatePrescription(request: PrescriptionRequest): Promise<PrescriptionResponse> {

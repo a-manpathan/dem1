@@ -1,24 +1,5 @@
+// services/speechService.ts
 import axios from 'axios';
-import { EventEmitter } from 'events';
-import { transcriptAnalysisService } from './transcriptAnalysisService';
-
-// Type definitions for Web Audio API
-interface MediaRecorderOptions {
-  mimeType?: string;
-  audioBitsPerSecond?: number;
-}
-
-declare class MediaRecorder {
-  constructor(stream: MediaStream, options?: MediaRecorderOptions);
-  start(timeSlice?: number): void;
-  stop(): void;
-  ondataavailable: (event: { data: Blob }) => void;
-  onstop: () => void;
-  onError: (event: Event) => void;
-  state: 'inactive' | 'recording' | 'paused';
-  mimeType: string;
-  static isTypeSupported(type: string): boolean;
-}
 
 interface SpeechRecognitionOptions {
   language?: string;
@@ -26,6 +7,7 @@ interface SpeechRecognitionOptions {
   interimResults?: boolean;
   onResult?: (transcript: string) => void;
   onError?: (error: any) => void;
+  onEnd?: () => void; // Add onEnd callback
 }
 
 class SpeechService {
@@ -34,6 +16,12 @@ class SpeechService {
   private audioChunks: Blob[] = [];
   private mediaRecorder: MediaRecorder | null = null;
   private stream: MediaStream | null = null;
+  private finalTranscript: string = ''; // Store final transcript
+
+  // Method to get the final transcript
+  getFinalTranscript(): string {
+    return this.finalTranscript;
+  }
 
   startRecording(options: SpeechRecognitionOptions = {}): Promise<boolean> {
     return new Promise((resolve, reject) => {
@@ -42,41 +30,57 @@ class SpeechService {
         return;
       }
 
+      this.finalTranscript = ''; // Clear previous transcript
+
       // Check if browser supports SpeechRecognition
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         this.recognition = new SpeechRecognition();
-        
+
         // Configure recognition
         this.recognition.lang = options.language || 'en-US';
         this.recognition.continuous = options.continuous || true;
         this.recognition.interimResults = options.interimResults || true;
-        
+
         this.recognition.onresult = (event: any) => {
-          const transcript = Array.from(event.results)
-            .map((result: any) => result[0].transcript)
-            .join(' ');
-          
-          if (options.onResult) {
-            options.onResult(transcript);
+          let interimTranscript = '';
+          let final = '';
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              final += transcript + ' ';
+            } else {
+              interimTranscript += transcript + ' ';
+            }
+          }
+          this.finalTranscript = final.trim(); // Store final transcript
+          const currentTranscript = (final || interimTranscript).trim();
+          if (options.onResult && currentTranscript) {
+            options.onResult(currentTranscript);
           }
         };
-        
+
         this.recognition.onerror = (event: any) => {
           console.error('Web Speech API error:', event.error);
           this.isRecording = false;
 
-          // If Web Speech API fails, try MediaRecorder fallback
+          // Fallback to MediaRecorder if Web Speech API fails
           if (event.error === 'network' || event.error === 'not-allowed' || event.error === 'service-not-allowed') {
             console.log('Web Speech API failed, switching to MediaRecorder...');
             this.recognition = null;
 
-            // Try MediaRecorder fallback
-            navigator.mediaDevices.getUserMedia({ audio: true })
+            navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 48000
+              }
+            })
               .then(stream => {
                 this.stream = stream;
                 this.audioChunks = [];
-                this.mediaRecorder = new MediaRecorder(stream);
+                this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
                 this.mediaRecorder.ondataavailable = (event) => {
                   if (event.data.size > 0) {
@@ -88,41 +92,57 @@ class SpeechService {
                   const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
                   try {
                     const transcriptResult = await this.transcribeAudio(audioBlob, options.language || 'en-US');
+                    this.finalTranscript = transcriptResult.transcript.trim(); // Store final transcript
                     if (options.onResult) {
-                      options.onResult(transcriptResult.transcript);
+                      options.onResult(this.finalTranscript);
                     }
                   } catch (error) {
                     if (options.onError) {
                       options.onError(error);
                     }
+                  } finally {
+                    if (options.onEnd) {
+                      options.onEnd(); // Call onEnd callback
+                    }
+                    if (this.stream) {
+                      this.stream.getTracks().forEach(track => track.stop());
+                      this.stream = null;
+                    }
                   }
+                };
 
-                  // Stop all tracks in the stream
-                  if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                    this.stream = null;
+                this.mediaRecorder.onerror = (event) => {
+                  console.error('MediaRecorder error:', event);
+                  if (options.onError) {
+                    options.onError('Recording error: ' + event);
                   }
                 };
 
                 this.mediaRecorder.start(1000);
                 this.isRecording = true;
+                resolve(true);
               })
               .catch(fallbackError => {
                 console.error('MediaRecorder fallback also failed:', fallbackError);
                 if (options.onError) {
                   options.onError('Speech recognition failed: ' + fallbackError.message);
                 }
+                reject(fallbackError);
               });
           } else {
             if (options.onError) {
               options.onError('Speech recognition error: ' + event.error);
             }
+            reject(new Error('Speech recognition error: ' + event.error));
           }
         };
-        
+
         this.recognition.onend = () => {
           console.log('Web Speech API ended');
           this.isRecording = false;
+          if (options.onEnd) {
+            options.onEnd(); // Call onEnd callback
+          }
         };
 
         this.recognition.onstart = () => {
@@ -141,7 +161,7 @@ class SpeechService {
           reject(error);
         }
       } else {
-        // Fallback to MediaRecorder API for audio capture and Google API for transcription
+        // Fallback to MediaRecorder API
         console.log('Using MediaRecorder API for speech recognition...');
         navigator.mediaDevices.getUserMedia({
           audio: {
@@ -154,15 +174,7 @@ class SpeechService {
           .then(stream => {
             this.stream = stream;
             this.audioChunks = [];
-
-            // Use default MIME type for MediaRecorder
-            const mimeType = 'audio/webm';
-
-            this.mediaRecorder = new MediaRecorder(stream, {
-              mimeType: mimeType || undefined
-            });
-
-            console.log('MediaRecorder using MIME type:', this.mediaRecorder.mimeType);
+            this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
 
             this.mediaRecorder.ondataavailable = (event) => {
               if (event.data.size > 0) {
@@ -171,38 +183,36 @@ class SpeechService {
             };
 
             this.mediaRecorder.onstop = async () => {
-              const audioBlob = new Blob(this.audioChunks, {
-                type: this.mediaRecorder?.mimeType || 'audio/webm'
-              });
-              console.log('Audio recorded:', audioBlob.size, 'bytes, type:', audioBlob.type);
-
+              const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
               try {
                 const transcriptResult = await this.transcribeAudio(audioBlob, options.language || 'en-US');
+                this.finalTranscript = transcriptResult.transcript.trim(); // Store final transcript
                 if (options.onResult) {
-                  options.onResult(transcriptResult.transcript);
+                  options.onResult(this.finalTranscript);
                 }
               } catch (error) {
-                console.error('Error transcribing audio:', error);
                 if (options.onError) {
                   options.onError(error);
                 }
-              }
-
-              // Stop all tracks in the stream
-              if (this.stream) {
-                this.stream.getTracks().forEach(track => track.stop());
-                this.stream = null;
+              } finally {
+                if (options.onEnd) {
+                  options.onEnd(); // Call onEnd callback
+                }
+                if (this.stream) {
+                  this.stream.getTracks().forEach(track => track.stop());
+                  this.stream = null;
+                }
               }
             };
 
-            this.mediaRecorder.onError = (event) => {
+            this.mediaRecorder.onerror = (event) => {
               console.error('MediaRecorder error:', event);
               if (options.onError) {
                 options.onError('Recording error: ' + event);
               }
             };
 
-            this.mediaRecorder.start(1000); // Collect data every second
+            this.mediaRecorder.start(1000);
             this.isRecording = true;
             resolve(true);
           })
@@ -237,7 +247,6 @@ class SpeechService {
       }
     }
 
-    // Stop all tracks in the stream
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
@@ -250,7 +259,7 @@ class SpeechService {
     return this.isRecording;
   }
 
-  private async transcribeAudio(audioBlob: Blob, language: string): Promise<{ transcript: string; analysis?: { symptoms: string[]; diagnosis: string; notes: string } }> {
+  private async transcribeAudio(audioBlob: Blob, language: string): Promise<{ transcript: string }> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
@@ -272,19 +281,14 @@ class SpeechService {
             languageCode: language
           }, {
             timeout: 30000,
-            headers: {
-              'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' }
           });
 
           const transcript = response.data.transcript;
           console.log('Transcription result:', transcript);
-          
-          // Only return the transcript, analysis will be handled separately in DoctorAppointments
           resolve({ transcript });
         } catch (error) {
           console.error('Error sending audio to server:', error);
-          reject(error);
           if (axios.isAxiosError(error)) {
             if (error.response) {
               reject(new Error(`Server error: ${error.response.status} - ${error.response.data?.error || error.message}`));
@@ -332,10 +336,7 @@ class SpeechService {
           console.log('Language detection response:', response.data);
 
           if (response.data && response.data.language) {
-            // Normalize language code to match UI expectations
             let detectedLanguage = response.data.language;
-
-            // Map common language codes to our expected format
             const languageMapping: { [key: string]: string } = {
               'en': 'en-US',
               'hi': 'hi-IN',
@@ -358,12 +359,9 @@ class SpeechService {
               'ja': 'ja-JP',
               'ko': 'ko-KR'
             };
-
-            // If the detected language is in our mapping, use the mapped value
             if (languageMapping[detectedLanguage]) {
               detectedLanguage = languageMapping[detectedLanguage];
             }
-
             resolve(detectedLanguage);
           } else {
             resolve(null);

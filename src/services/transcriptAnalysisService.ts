@@ -11,7 +11,7 @@ interface TranscriptAnalysisResponse {
 }
 
 class TranscriptAnalysisService {
-  private readonly apiUrl = 'https://backendgen-hgewftfphagrcbg7.southindia-01.azurewebsites.net/api/transcript/analyze';
+  private readonly apiUrl = 'http://localhost:8000/api/transcript/analyze';
 
   async analyzeTranscript(transcript: string): Promise<TranscriptAnalysisResponse> {
     try {

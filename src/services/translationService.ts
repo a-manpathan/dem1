@@ -13,7 +13,7 @@ interface TranslationResponse {
 }
 
 class TranslationService {
-  private readonly apiUrl = 'https://backendgen-hgewftfphagrcbg7.southindia-01.azurewebsites.net/api/translate';
+  private readonly apiUrl = 'http://localhost:8000/api/translate';
 
   async translateText(options: TranslationOptions): Promise<TranslationResponse> {
     try {
